@@ -1,1 +1,1 @@
-# func-prog-scala
+# Functional Programming with Scala
