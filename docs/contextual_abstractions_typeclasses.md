@@ -3,7 +3,6 @@
   * Contextuals abstractions in Scala 3
   * Extension Methods
   * Typeclass Pattern
-  * Example: BOSS SDK
   * Cats Typeclasses
   * Semigroup
   * Monoid
