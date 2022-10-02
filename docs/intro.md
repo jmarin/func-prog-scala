@@ -1,10 +1,3 @@
----
-title: Introduction to Functional Programming
-author: Juan Marin Otero
-extensions:
-  - image_ueberzug
----
-
 ## Introduction to Functional Programming
    
    * Why Functional Programming
