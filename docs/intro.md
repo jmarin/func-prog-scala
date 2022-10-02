@@ -355,7 +355,7 @@ So, there is a problem in the `Future` in the `Scala` standard library, because 
 - Eager evaluation: `Future` starts evaluating its value right after it's defined
 - Memoization: once the value is computed, it's shared with other calls, without being recalculated. 
 
-**This means that `Future` is not referentially transparent**
+**This means that Future is not referentially transparent**
 
 Example: how many times do we see "Hello World" printed out?
 
