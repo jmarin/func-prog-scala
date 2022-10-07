@@ -1,7 +1,7 @@
 # Functional Programming with Scala
 
 ## [Introduction to Functional Programming](docs/intro.md)
-## [Contextual Abstractions and Typeclasses](docs/contextual_abstractions_typeclasses.md)
+## [Contextual Abstractions, Typeclasses and Sequential Computation](docs/typeclasses_monads.md)
 
 
 

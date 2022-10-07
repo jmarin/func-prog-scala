@@ -3,13 +3,13 @@
   * Contextuals abstractions in Scala 3
   * Extension Methods
   * Typeclass Pattern
-  * Cats Typeclasses
-  * Semigroup
+  
+## Sequential Computations
+
+  * map, flatmap and for-comprehensions
   * Monoid
-  * Applicative
   * Functor
+  * Applicative
   * Monad
-  * ApplicativeError / MonadError
-  * Traverse
-  * Practical Example: Functional Validation with Cats
+
 
