@@ -67,11 +67,78 @@ These methods feel completely integrated and can be used as any other method alr
 
 **Example:** 
 
+Suppose we want to print the current date in a particular `JSON` format. On the JVM, we can use the `java.time.Instant` to get the current time. It has a method, `toString()`, that represents the current time in `ISO-8601` format. But we want a `JSON` representation. We can "extend" this class as follows
+
+```scala
+import java.time.Instant
+
+object TimeExtensions:
+  extension (t: Instant)
+    def toJSON: String =   
+      s"""{"now": "${t.toString()}"}"""
+
+
+import TimeExtensions.*
+
+val now = Instant.now()
+
+println(now.toJSON)
+
+```
 
 ---
 
-
 ### Typeclass Pattern
+
+Typeclasses refer to polymorphic type systems. A Typeclass defines a set of methods that is shared across multiple types. For a type to belong to a typeclass, it must implement the methods of that typeclass. These implementations are _ad-hoc_, which means that the methods can have different implementations for different types. This type of polymorphism is usually called _ad-hoc polymorphism_ and it is a very powerful technique to model abstract behavior for your software, that can be extended for the particular types that you need to work with.
+
+**Example**
+
+```scala
+// Part 1 - Type class definition: this is usually done with a generic trait
+
+  case class Person(name: String, age: Int)
+
+  trait JSONSerializer[T]:
+    def toJson(value: T): String
+
+  // Part 2 - Define type class instances: implementations of the types that are part of the Typeclass
+
+  given stringSerializer: JSONSerializer[String] with
+    override def toJson(value: String): String = "\"" + value + "\""
+
+  given intSerializer: JSONSerializer[Int] with
+    override def toJson(value: Int): String = value.toString()
+
+  given personSerializer: JSONSerializer[Person] with
+    override def toJson(person: Person): String = s"""
+      {"name": ${person.name}, "age": ${person.age}}
+    """.stripMargin.trim()
+
+  // Part 3 - User facing API: here we leverage the contextual abstractions in Scala 3. For this method, if there is an implicit instance of JSONSerializer for the type T, the compiler will inject it in scope and use it
+
+  def convert2Json[T](value: T)(using serializer: JSONSerializer[T]): String =
+    serializer.toJson(value)
+
+  def convertList2Json[T](list: List[T])(using
+      serializer: JSONSerializer[T]
+  ): String =
+    list.map(value => serializer.toJson(value)).mkString("[", ",", "]")
+
+  // Part 4 - Optional. You can add extension methods for the types you support
+
+  extension [T](value: T)
+    def toJson(using serializer: JSONSerializer[T]): String =
+      serializer.toJson(value)
+
+// This makes the typeclass pattern very expressive
+import Typeclass.*
+
+println(convertList2Json(List(Person("Alice", 23), Person("Bob", 46))))
+val bob = Person("Bob", 46)
+println(bob.toJson)
+
+```
 
 
 ---
