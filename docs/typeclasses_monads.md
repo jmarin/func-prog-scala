@@ -6,7 +6,6 @@
   * Sequential computations
   * Monoid
   * Functor
-  * Applicative
   * Monad
 
 ---
@@ -324,6 +323,9 @@ trait Functor[C[_]]:
 
 With "C" being a container, or a higher-kinded type as discussed before. 
 
+**A Functor allows us to generalize an API on mappable structures in a uniform way without needing to repeat ourselves**
+
+
 Example 1: generalize the definition of Functor for several "containers"
 
 ```scala
@@ -352,49 +354,48 @@ println(Functors.multiplyBy10(list)) // List(10, 20, 30)
 Example 2: implementing a Functor for a custom data type
 
 ```scala
-object Functors:
+trait Functor[C[_]]:
+  def map[A, B](c: C[A])(f: A => B): C[B]
 
-  trait Functor[C[_]]:
-    def map[A, B](c: C[A])(f: A => B): C[B]
+given listFunctor: Functor[List] = new Functor[List]:
+  override def map[A, B](container: List[A])(f: A => B): List[B] =
+    container.map(f)
 
-  given listFunctor: Functor[List] = new Functor[List]:
-    override def map[A, B](container: List[A])(f: A => B): List[B] =
-      container.map(f)
+given optionFunctor: Functor[Option] = new Functor[Option]:
+  override def map[A, B](container: Option[A])(f: A => B): Option[B] =
+    container.map(f)
 
-  given optionFunctor: Functor[Option] = new Functor[Option]:
-    override def map[A, B](container: Option[A])(f: A => B): Option[B] =
-      container.map(f)
+// General API for `map`
 
-  // General API for `map`
-
-  def multiplyBy10[C[_]](container: C[Int])(using functor: Functor[C]): C[Int] =
-    functor.map(container)(_ * 10)
+def multiplyBy10[C[_]](container: C[Int])(using functor: Functor[C]): C[Int] =
+  functor.map(container)(_ * 10)
 
 // This works now for any instance of givens Functor....
-
-  // Binary Tree
-  enum Tree[+A]:
-    case Leaf[+A](value: A) extends Tree[A]
-    case Branch[+A](value: A, left: Tree[A], right: Tree[A]) extends Tree[A]
-
-  object Tree:
-    def leaf[A](value: A): Tree[A] = Leaf(value)
-    def branch[A](value: A, left: Tree[A], right: Tree[A]): Tree[A] =
-      Branch(value, left, right)
-
-  import Tree.*
-
-  given treeFunctor: Functor[Tree] = new Functor[Tree]:
-    override def map[A, B](container: Tree[A])(f: A => B): Tree[B] =
-      container match
-        case Leaf(value) => Leaf(f(value))
-        case Branch(value, left, right) =>
-          Branch(f(value), map(left)(f), map(right)(f))
 
 import Functors.*
 
 val list = List(1, 2, 3)
-println(Functors.multiplyBy10(list))
+println(Functors.multiplyBy10(list)) // List(10, 20, 30)
+
+// Binary Tree
+enum Tree[+A]:
+  case Leaf[+A](value: A) extends Tree[A]
+  case Branch[+A](value: A, left: Tree[A], right: Tree[A]) extends Tree[A]
+
+object Tree:
+  def leaf[A](value: A): Tree[A] = Leaf(value)
+  def branch[A](value: A, left: Tree[A], right: Tree[A]): Tree[A] =
+    Branch(value, left, right)
+
+import Tree.*
+
+given treeFunctor: Functor[Tree] = new Functor[Tree]:
+  override def map[A, B](container: Tree[A])(f: A => B): Tree[B] =
+    container match
+      case Leaf(value) => Leaf(f(value))
+      case Branch(value, left, right) =>
+        Branch(f(value), map(left)(f), map(right)(f))
+
 
 // ...including instances of custom data structures
 
@@ -403,14 +404,30 @@ val tree =
 
 println(tree)
 println(multiplyBy10(tree))
+
+// By leveraging extension methods we can also add a map method to a Functor
+
+extension [C[_], A, B](container: C[A])(using functor: Functor[C])
+  def map(f: A => B): C[B] = functor.map(container)(f)
+
+def treeMultiplyBy10 =
+  tree.map(_ * 10) // gets transformed into treeFunctor.map(tree)(_ * 10)
+
+// We've just added the same syntax that List, Option, etc have. We can map Tree[A] the same we do Option[A] or List[A]
+
+println(treeMultiplyBy10)
 ```
 
 ---
 
-#### Applicative
-
----
-
 #### Monad
+
+The concept of a `Monad` is one of those in Functional Programming that sounds esoteric, complicated, and puts many people off when first hearing about it. 
+
+The important thing to remember abotu a Monad is that:
+
+* it has a `map` method
+* it has a `flatMap` method
+* it has a `lift` or `pure` method to "lift" another type into the `Monad`
 
 

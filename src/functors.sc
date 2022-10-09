@@ -49,3 +49,15 @@ val tree =
 
 println(tree)
 println(multiplyBy10(tree))
+
+// By leveraging extension methods we can also add a map method to a Functor
+
+extension [C[_], A, B](container: C[A])(using functor: Functor[C])
+  def map(f: A => B): C[B] = functor.map(container)(f)
+
+def treeMultiplyBy10 =
+  tree.map(_ * 10) // gets transformed into treeFunctor.map(tree)(_ * 10)
+
+// We've just added the same syntax that List, Option, etc have. We can map Tree[A] the same we do Option[A] or List[A]
+
+println(treeMultiplyBy10)
