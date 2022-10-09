@@ -140,7 +140,6 @@ println(bob.toJson)
 
 ```
 
-
 ---
 
 
@@ -211,18 +210,207 @@ def authorize2(userId: String): Option[Authorization] =
 
 ---
 
-### Monoid
+### Purely Algebraic Data Structures
+
+By now, hopefully you have gotten a taste of some data structures that share a certain _shape_, that is, they behave the same way and can use the same type of functions, regardless of the type they operate on or contain. We are going to explore a few pure _algebraic functional structures_, that is, structures that we entirely defined by their _algebra_. This _algebra_ is the set of operations they support, which in turn defines the `laws` they have to comply with. Other than sharing the same laws, instances of these structures have little to do with each other. But thanks to this algebraic behavior it allows us to write polymorphic code that is very generic and reusable. 
+
+The names of some of these algebraic structures come from a branch of Mathematics called [Category Theory](https://en.wikipedia.org/wiki/Category_theory). It is not necessary to know this in order to be a proficient FP developer
+
+
+#### Monoid
+
+`Monoids` are everywhere, whether you realize it or not. They are one of the simplest algebras that allow you to combine two types in order to produce another value of the same type. 
+
+A `Monoid` is described by:
+
+* Some type A
+* An associative binary operation
+* An identity element
+
+For example, the sum operation for real numbers is a `Monoid`. It is associative and produces another number. It's "identity" element is the number zero. The same laws applied to multiplication produce an identity element of 1. 
+
+The general shape of a `Monoid` can be described as follows:
+
+```scala
+trait Monoid[A]:
+  def combine(left: A, right: A): A
+  def zero: A
+```
+
+With this, we can construct a few instances of Monoids for some base types:
+
+```scala
+// String
+
+val stringMonoid = new Monoid[String]:
+  def combine(left: String, right: String): String = left + right
+  def zero: String = ""
+
+println(stringMonoid.combine("a", "b"))
+println(stringMonoid.combine("a", ""))
+```
+
+
+**Example: Combining Maps**
+
+```scala
+object Monoids:
+
+  trait Monoid[A]:
+    def combine(left: A, right: A): A
+    def zero: A
+
+  given stringMonoid: Monoid[String] = new Monoid[String]:
+    def combine(left: String, right: String): String = left + right
+    def zero: String = ""
+
+  given intAddition: Monoid[Int] = new Monoid[Int]:
+    def zero: Int = 0
+    def combine(a: Int, b: Int) = a + b
+
+  given mapMonoid[K, V](using Monoid[V]): Monoid[Map[K, V]] =
+    new Monoid[Map[K, V]]:
+      override def zero: Map[K, V] = Map.empty[K, V]
+      override def combine(left: Map[K, V], right: Map[K, V]): Map[K, V] =
+        val monoid = summon[Monoid[V]]
+        (left.keySet ++ right.keySet).foldLeft(zero) { (acc, k) =>
+          acc.updated(
+            k,
+            monoid.combine(
+              left.getOrElse(k, monoid.zero),
+              right.getOrElse(k, monoid.zero)
+            )
+          )
+        }
+
+import Monoids.Monoid
+import Monoids.given
+
+val m1 = Map("a" -> 1, "b" -> 2, "c" -> 3)
+val m2 = Map("d" -> 4, "e" -> 5)
+
+given monoid: Monoid[Map[String, Int]] = mapMonoid[String, Int]
+
+val m3 = monoid.combine(m1, m2)
+println(m3) // HashMap(e -> 5, a -> 1, b -> 2, c -> 3, d -> 4)
+```
 
 ---
 
-### Functor
+#### Functor
+
+A `Functor` is an algebraic structure that generalizes the `map` function. In Category Theory terms, it describes a mapping between categories. This usually referes to transformation of data or functions, and it is one of the cornerstones of any functional programming language. Most mainstream languages have adopted the capability to `map` certain data structures to derive new data strutures by applying a function (usually a closure).
+
+As we have already seen, many of the "container" data structures such as `Option`, `List`, `Future`, etc. have functor properties. Does this mean that any structure that implements `map` is a `Functor`?. No. In order to be a proper `Functor`, the structure needs to comply with the `Functor Laws`:
+
+* **Identity**: applying `map` to the identity function should return the same container without any changes 
+
+```scala
+fa.map(x => x) = fa
+```
+
+* **Composition**: applying `map` on a function `f` and then applying `map` on the function `g` of the original result should result in the same as applying `map` to the function composition of `f` and `g`
+
+```scala
+fa.map(f).map(g) = fa.map(f.andThen(g))
+```
+
+A generic signature for a functor can be expressed as follows (assume C to be a "container"):
+
+```scala
+trait Functor[C[_]]:
+  def map[A, B](c: C[A])(f: A => B): C[B]
+```
+
+With "C" being a container, or a higher-kinded type as discussed before. 
+
+Example 1: generalize the definition of Functor for several "containers"
+
+```scala
+trait Functor[C[_]]:
+  def map[A, B](c: C[A])(f: A => B): C[B]
+
+given listFunctor: Functor[List] = new Functor[List]:
+  override def map[A, B](container: List[A])(f: A => B): List[B] =
+    container.map(f)
+
+given optionFunctor: Functor[Option] = new Functor[Option]:
+  override def map[A, B](container: Option[A])(f: A => B): Option[B] =
+    container.map(f)
+
+// General API for `map`
+
+def multiplyBy10[C[_]](container: C[Int])(using functor: Functor[C]): C[Int] =
+  functor.map(container)(_ * 10)
+
+// This works now for any instance of givens Functor
+
+val list = List(1, 2, 3)
+println(Functors.multiplyBy10(list)) // List(10, 20, 30) 
+```
+
+Example 2: implementing a Functor for a custom data type
+
+```scala
+object Functors:
+
+  trait Functor[C[_]]:
+    def map[A, B](c: C[A])(f: A => B): C[B]
+
+  given listFunctor: Functor[List] = new Functor[List]:
+    override def map[A, B](container: List[A])(f: A => B): List[B] =
+      container.map(f)
+
+  given optionFunctor: Functor[Option] = new Functor[Option]:
+    override def map[A, B](container: Option[A])(f: A => B): Option[B] =
+      container.map(f)
+
+  // General API for `map`
+
+  def multiplyBy10[C[_]](container: C[Int])(using functor: Functor[C]): C[Int] =
+    functor.map(container)(_ * 10)
+
+// This works now for any instance of givens Functor....
+
+  // Binary Tree
+  enum Tree[+A]:
+    case Leaf[+A](value: A) extends Tree[A]
+    case Branch[+A](value: A, left: Tree[A], right: Tree[A]) extends Tree[A]
+
+  object Tree:
+    def leaf[A](value: A): Tree[A] = Leaf(value)
+    def branch[A](value: A, left: Tree[A], right: Tree[A]): Tree[A] =
+      Branch(value, left, right)
+
+  import Tree.*
+
+  given treeFunctor: Functor[Tree] = new Functor[Tree]:
+    override def map[A, B](container: Tree[A])(f: A => B): Tree[B] =
+      container match
+        case Leaf(value) => Leaf(f(value))
+        case Branch(value, left, right) =>
+          Branch(f(value), map(left)(f), map(right)(f))
+
+import Functors.*
+
+val list = List(1, 2, 3)
+println(Functors.multiplyBy10(list))
+
+// ...including instances of custom data structures
+
+val tree =
+  Tree.branch(1, Tree.branch(2, Tree.leaf(3), Tree.leaf(4)), Tree.leaf(5))
+
+println(tree)
+println(multiplyBy10(tree))
+```
 
 ---
 
-### Applicative
+#### Applicative
 
 ---
 
-### Monad
+#### Monad
 
 
