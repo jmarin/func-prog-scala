@@ -424,7 +424,68 @@ println(treeMultiplyBy10)
 
 The concept of a `Monad` is one of those in Functional Programming that sounds esoteric, complicated, and puts many people off when first hearing about it. 
 
-The important thing to remember abotu a Monad is that:
+A `Monad` is a mechanism to describe sequential computations with some additional features (effects). These effects can be the possibility of a value being null, a computation that can fail, that is asynchronous, etc. They are expressed with a Type constructor that is itself a `Monad` (i.e. `Option[A]`)
+
+A Monad must have two fundamental methods:
+
+* The ability to wrap a value into a `Monad`: `pure`
+* The ability to transform values from one type of another, wrapped inside of a container
+
+Example 1: Option:
+
+```scala
+case class User(firstName: String, lastName: String):
+  require(firstName != null && lastName != null)
+
+// Let's get the user, the stupid way
+def getUser(firstName: String, lastName: String): User = 
+  if (firstName != null) then
+    if (lastName != null) then
+      User(firstName, lastName)
+    else
+      null
+  else
+    null
+```
+
+We first extract the first name, if that is not null then we extract the last name, and if that is also not null, then we construct our User instance. This pattern is everywhere. The imperative code such as the one above can be found everywhere too, and it is very bad
+
+A better Option (pun intended)
+
+```scala
+def optionUser(firstName: String, lastName: String): Option[User] =
+  Option(firstName).flatMap( fName => 
+    Option(lastName).flatMap( lName =>
+      Option(User(fName, fName))  
+    )  
+  )
+
+// Even better, with for-comprehensions
+
+def optionUser2(firstName: String, lastName: String): Option[User] =
+  for 
+    fName <- Option(firstName)
+    lName <- Option(lastName)
+  yield User(fName, lName)
+```
+
+We don't have to program defensively, executing the "happy path". But if there is no value, we get `None`
+
+A very similar structure would be present if we used `Future`, `List`, etc. All of them have the following: 
+
+* A "constructor": a way to take a value and put it inside the container. Usually called `unit` or `pure`
+* A transformation function that allows for sequential computations on the wrapped types. Usually called `flatrMap`
+
+A `Monad`, in addition to this, has som properties or _Laws_. This is the part where it gets a bit complicated. I am going to include some syntax to describe what they do, but from a practical point of view don't worry too much about this for now. Just know that adding `pure` and `flatMap` is not enough to create a real `Monad`
+
+* Left Identity --> `Moand.pure(x).flatMap(f) = f(x)`
+* Right Identity --> `x.flatMap(y => Moand.pure(y)) = x`
+* Associativity --> `m.flatMap(f).flatMap(g) = m.flatMap(x => f(x).flatMap(g))`
+
+The Monad structure and its laws defines a Functional Programming pattern that is generic and reusable for resolving a generic problem, usually involving the resolution of sequential computations on different types
+
+
+The important thing to remember about a Monad is that:
 
 * it has a `map` method
 * it has a `flatMap` method
