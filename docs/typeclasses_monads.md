@@ -1,12 +1,12 @@
 ## Contextual Abstractions, typeclasses and monads
 
-  * Contextuals abstractions in Scala 3
-  * Extension Methods
-  * Typeclass Pattern
-  * Sequential computations
-  * Monoid
-  * Functor
-  * Monad
+  * [Contextuals abstractions in Scala 3](#contextual-abstractions-in-scala-3)
+  * [Extension Methods](#extension-methods)
+  * [Typeclass Pattern](#typeclass-pattern)
+  * [Sequential computations](#sequential-computations)
+  * [Monoid](#monoid)
+  * [Functor](#functor)
+  * [Monad](#monad)
 
 ---
 

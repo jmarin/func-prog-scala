@@ -1,15 +1,15 @@
 ## Introduction to Functional Programming
    
-   * Why Functional Programming
-   * Pure functions
-   * Side Effects
-   * Referential Transparency
-   * Higher-order Functions
-   * Functional Data Structures
-   * Compositionality
-   * Polymorphism through Higher-Kinded Types
-   * Handling errors without Exceptions (Option, Try, Either data types)
-   * There is a problem in the Future
+   * [Why Functional Programming](#why-functional-programming)
+   * [Pure functions](#pure-functions)
+   * [Side Effects](#side-effects)
+   * [Referential Transparency](#referential-transparency)
+   * [Higher-order Functions](#higher-order-functions)
+   * [Functional Data Structures](#functional-data-structures)
+   * [Compositionality](#compositionality)
+   * [Polymorphism through Higher-Kinded Types](#polymorphism-through-higher-kinded-types)
+   * [Handling errors without Exceptions (Option, Try, Either data types)](#handling-errros-without-exceptions)
+   * [There is a problem in the Future](#there-is-a-problem-in-the-future)
 
 ---
 
