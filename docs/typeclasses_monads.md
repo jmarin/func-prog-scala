@@ -81,7 +81,7 @@ import TimeExtensions.*
 
 val now = Instant.now()
 
-println(now.toJSON)
+println(now.toJSON) // {"now": "2022-10-10T13:16:31.747331738Z"}
 
 ```
 
