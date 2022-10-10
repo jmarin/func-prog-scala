@@ -133,9 +133,9 @@ Typeclasses refer to polymorphic type systems. A Typeclass defines a set of meth
 // This makes the typeclass pattern very expressive
 import Typeclass.*
 
-println(convertList2Json(List(Person("Alice", 23), Person("Bob", 46))))
+println(convertList2Json(List(Person("Alice", 23), Person("Bob", 46)))) // [{"name": Alice, "age": 23},{"name": Bob, "age": 46}]
 val bob = Person("Bob", 46)
-println(bob.toJson)
+println(bob.toJson) // {"name": Bob, "age": 46}
 
 ```
 
