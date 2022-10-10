@@ -482,12 +482,14 @@ A `Monad`, in addition to this, has som properties or _Laws_. This is the part w
 * Right Identity --> `x.flatMap(y => Moand.pure(y)) = x`
 * Associativity --> `m.flatMap(f).flatMap(g) = m.flatMap(x => f(x).flatMap(g))`
 
+The last property defines that a `Monad` is a sequential computation in the general term . 
+
 The Monad structure and its laws defines a Functional Programming pattern that is generic and reusable for resolving a generic problem, usually involving the resolution of sequential computations on different types
 
 
 The important thing to remember about a Monad is that:
 
-* it has a `map` method
+* it has a `map` method (this is because it is derived from a `Functor`)
 * it has a `flatMap` method
 * it has a `lift` or `pure` method to "lift" another type into the `Monad`
 
