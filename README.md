@@ -2,6 +2,7 @@
 
 ## [Introduction to Functional Programming](docs/intro.md)
 ## [Contextual Abstractions, Typeclasses and Sequential Computation](docs/typeclasses_monads.md)
+## [Functional Programming with Cats](docs/cats_typeclasses_validation.md)
 
 
 
@@ -13,3 +14,4 @@ References:
 4. [Scala with Cats](https://underscore.io/books/scala-with-cats/)
 5. [Reactive Design Patterns](https://www.manning.com/books/reactive-design-patterns)
 6. [Core Scala FP Tutorials](https://github.com/Baeldung/scala-tutorials/tree/master/scala-core-fp)
+7. [Typelevel documentation](https://typelevel.org/cats)
