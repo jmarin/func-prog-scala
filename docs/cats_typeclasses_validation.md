@@ -10,6 +10,8 @@
   * [Traverse](#traverse)
   * [Monad Transformers](#monad-transformers)
 
+---
+
 ### Semigroup
 
 A type `A` can form a `Semigroup` if it has an associative binary operation.
@@ -47,6 +49,8 @@ println(leftSum == rightSum) // true
 
 But really, why is this that important?. Well, for one, the associative property allows you to break a large list into smaller pieces, and then combine them. The sublists can be run in parallel to improve performance, where necessary.
 
+---
+
 ### Monoid
 
 `Monoid` extends `Semigroup` by adding an identity value
@@ -70,6 +74,8 @@ import cats.kernel.Monoid
 def combineMonoids[A: Monoid](xs: List[A]): A =
   xs.foldLeft(Monoid[A].empty)(Monoid[A].combine)
 ```
+
+---
 
 ### Functor
 
@@ -96,6 +102,7 @@ fa.map(x => x) = fa
 
 Functor is used to model a computational effect on a type. For instance, `Option`'s effect abstracts away potentially missing values. This means that we can consider Functor as a way to treat a **single** effect
 
+---
 
 ### Applicative
 
@@ -117,6 +124,8 @@ trait Applicative[F[_]] extends Functor[F] {
 `Applicative` allows working with **independent** effects, that can be later composed. 
 
 
+---
+
 ### Monad
 
 A `Monad` is a way to express sequential computations. Many times if you are using a for-comprehension you are working with a `Monad` (sometimes a `Functor`)
@@ -137,6 +146,8 @@ val product = cartesianProduct(List(1, 2, 2), List("a", "b", "c"))
 println(s"Monad Cartesian Product: $product") // Monad Cartesian Product: List((1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (2,a), (2,b), (2,c))
 ```
 
+---
+
 ### ApplicativeError / MonadError
 
 An `ApplicativeError` extends `Applicative` to handle errors. The `ApplicativeError` is defined as follows:
@@ -153,6 +164,7 @@ This allows us to generalize erorr handling in a similar way to `Either`, but fo
 
 There is a corresponding `MonadError` that is an extension of a `Monad`
 
+---
 
 ### Traverse
 
@@ -197,6 +209,8 @@ val users = userIds.traverse(getUser)
 println(Await.result(users, 2.seconds)) // List(Some(User(a,John)), Some(User(b,Mary)), Some(User(c,Bob)))
 ```
 
+---
+
 ### Monad Transformers
 
 Monad Transformers "stack" effectful computations expressed with Monads. 
@@ -219,6 +233,6 @@ A Monad Transformer has some very useful methods to wrap and unwrap values from 
 
 This gets a little confusing, but an `OptionT[List, A]` is the same thing as `List[Option, A]`, and it just provides convenient methods to operate with them
 
-
+---
   
 ## [Practical Example: Functional Validation with Cats](https://github.com/jmarin/cats-validation-example)
