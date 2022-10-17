@@ -142,8 +142,8 @@ def cartesianProduct[F[_]: Monad, A, B](fa: F[A], fb: F[B]): F[(A, B)] =
     b <- fb
   yield (a, b)
 
-val product = cartesianProduct(List(1, 2, 2), List("a", "b", "c"))
-println(s"Monad Cartesian Product: $product") // Monad Cartesian Product: List((1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (2,a), (2,b), (2,c))
+val product = cartesianProduct(List(1, 2, 3), List("a", "b", "c"))
+println(s"Monad Cartesian Product: $product") // Monad Cartesian Product: List((1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (3,a), (3,b), (3,c))
 ```
 
 ---
@@ -172,7 +172,7 @@ This typeclass allows us to use `Applicatives` to iterate over a data structure
 
 ```scala
 trait Traverse[F[_]]:
-  def tragerse[G[_]: Applicative, A, B](fa:F[A])(f: A => G[B]): G[F[B]]
+  def traverse[G[_]: Applicative, A, B](fa:F[A])(f: A => G[B]): G[F[B]]
 ```
 
 
