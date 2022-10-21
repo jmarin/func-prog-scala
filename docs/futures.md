@@ -5,7 +5,7 @@
   * [The JVM threading model](#the-jvm-threading-model)
   * [Event Loops](#event-loops)
   * [Asynchronous and non-blocking I/O with Futures](#asynchronous-and-non-blocking-io-with-futures)
-  * [Integrating with Akka Actors](#integrating-with-akka-actors)
+  * [Interacting with Akka Actors](#integrating-with-akka-actors)
   * [Future Patterns: use cases and practical examples](#future-patterns-use-cases-and-practical-examples)
   * [Testing Futures](#testing-futures)
   * [Issues with the Future API](#issues-with-the-future-api)  
@@ -66,14 +66,12 @@ Important: `ForkJoinPool` is fine for most use cases, but not for blocking calls
 Real world workloads are usually a mix of blocking and non-blocking code. The best approach is to separate these operations into separate thread pools, optimized for each type of work load (i.e. async I/O vs blocking database or file access). Runtimes like `Akka` or `Cats-Effect` come with sane defaults but also allow you to specify the type of thread pool to use in each case. 
 
 
-**Example: Asynchronous computation, sequential vs parallel**
-
-
+[Example: Asynchronous computation, interacting with Actors](https://github.com/jmarin/scala-futures-examples)
 
 
 ---
 
-### Integrating with Akka Actors
+### Interacting with Akka Actors
 
 ---
 
