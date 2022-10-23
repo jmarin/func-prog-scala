@@ -44,10 +44,11 @@ For long running tasks, native threads are more efficient. For very short worklo
 
 The bottom line is that in its current form, the `JVM` uses native threads, which are very efficient but must be treated as a scarce resource that needs to be carefully managed in order to extract the maximum and most efficient performance from our systems.  
 
-In contrast, let's take a very brief look at the threading model for `JavaScript` and `Python`. In the case of `JavaScript`, concurrency is achieved by leveraging event loops (see below). `Python` offers some options, but none of them are optimal due to lack of native support for a multithreaded runtime and they feel very primitive and cumbersome when compared to a real multithreaded language (which is usually also compiled and thus further optimized). `Python` threads are cooperative, which means that the runtime divides its attention between them. This approach is not recommended for CPU intensive work (i.e. calculating hash functions). The other way in which `Python` can execute functions concurrently is by using `async`, which also uses cooperative multitasking on a single thread. This means there is no real support for parallelism. Also, Python as a runtime is notoriously slow (don't take my word for it; look up some of the benchmarks out there).
+In contrast, let's take a very brief look at the threading model for `JavaScript` and `Python`. In the case of `JavaScript`, concurrency is achieved by leveraging event loops (see below). `Python` offers some options, but none of them are optimal due to lack of native support for a multithreaded runtime and they feel very primitive and cumbersome when compared to a real multithreaded language (which is usually also compiled and thus further optimized). `Python` threads are cooperative, which means that the runtime divides its attention between them. This approach is not recommended for CPU intensive work. The other way in which `Python` can execute functions concurrently is by using `async`, which also uses cooperative multitasking on a single thread. This means there is no real support for parallelism, in part due to the imposed `Global Interpreter Lock` on the runtime which forces a single thread of execution. If your computer has 64 cores, `Python` won't take advantage of them natively. 
+
+For these and other reasons, the `Python` runtime is notoriously slow, among the worst performers of the mainstream languages (please don't take my word for it; look up some of the benchmarks out there). Many `Python` libraries are wrapping native libraries written in `C`, which allow them to have very good performance. At this stage we've crossed into the world of native compiled code, which is another thing altogether. 
 
 In contrast, the `JVM` threading model allows for both concurrency and parallelism within the same application, if necessary, as we will see below.
-
 
 ---
 
@@ -100,9 +101,6 @@ Important: `ForkJoinPool` is fine for most use cases, but not for blocking calls
 Real world workloads are usually a mix of blocking and non-blocking code. The best approach is to separate these operations into separate thread pools, optimized for each type of work load (i.e. async I/O vs blocking database or file access). Runtimes like `Akka` or `Cats-Effect` come with sane defaults but also allow you to specify the type of thread pool to use in each case. 
 
 
-[Example: Asynchronous computation, interacting with Actors](https://github.com/jmarin/scala-futures-examples)
-
-
 ---
 
 ### Concurrency vs Parallelism
@@ -117,7 +115,7 @@ Parallelism is at the hardware level, it requires the physical cores to be prese
 
 For example, in `Akka` the Actor Model is a programming model specifically designed for concurrency (and it is a mistake to use it for parallel workloads). The `Future` API can be used for both:
 
-* Concurrency: by default, a `Future` will run in a thread if it is available (using thread pools, as we will see later). Once we declare a `Future`, that code runs in a different thread than the main program. This API offers several ways to deal with how to process those responses:
+* **Concurrency**: by default, a `Future` will run in a thread if it is available (using thread pools, as we will see later). Once we declare a `Future`, that code runs in a different thread than the main program. This API offers several ways to deal with how to process those responses:
 
     - You can use monadic expressions to chain processes, or transform the wrapped result inside a `Future`
 
@@ -147,6 +145,32 @@ For example, in `Akka` the Actor Model is a programming model specifically desig
       case Failure(ex) => println(ex.getLocalizedMessage())
    }
    ```
+
+* **Parallelism**: you can very easily run several parallel computations on the `JVM` with the `Scala` `Future` API
+
+  For example, to get several user's data from an external service or database and order them based on their age, we can run these in parallel as follows:
+
+  ```scala
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  case class User(name: String, age: Int) extends Ordered[User]:
+    def compare(that: User) = this.age compare that.age
+
+  def getUser(id: String): Future[User] = ???
+
+  val bob = getUser("Bob")
+  val jane = getUser("Bane")
+  val mary = getUser("Mary")
+
+  for 
+    b <- bob
+    j <- jane
+    m <- mary
+  yield
+    List(b, j, m).sorted // returns Future[User], ordered by age
+  ```
+
+  This technique is very useful when implementing the [Scatter-Gather Pattern](https://www.enterpriseintegrationpatterns.com/patterns/messaging/BroadcastAggregate.html) (i.e. very common when implementing application level API Gateways)
 
 ---
 
