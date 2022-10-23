@@ -1,3 +1,10 @@
+---
+title: Futures
+author: Juan Marin Otero <juan.marin.otero@gmail.com>
+extensions:
+  - image_ueberzug
+---
+
 ## Back to the Future: Concurrency and Parallelism
 
   * [Amdahl's Law](#amdahls-law)
@@ -16,6 +23,12 @@
 ---
 
 ### Amdahl's Law
+
+![20](img/AmdahlsLaw.png)
+
+This law refers to the theoretical speedup in latency of the execution of a task is a function of the number of processors executing it. The speedup is limited by the serial part of the program. For example, if 95% of the program can be parallelized, the theoretical maximum speedup using parallel computing is 20 times. 
+
+
 
 ---
 
