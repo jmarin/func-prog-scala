@@ -17,3 +17,4 @@ References:
 5. [Reactive Design Patterns](https://www.manning.com/books/reactive-design-patterns)
 6. [Core Scala FP Tutorials](https://github.com/Baeldung/scala-tutorials/tree/master/scala-core-fp)
 7. [Typelevel documentation](https://typelevel.org/cats)
+8. [Principles of Functional Programming](https://medium.com/@kumbhar.pradnya/functional-programming-principles-6f59bc6764ff)
