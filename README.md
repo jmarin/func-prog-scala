@@ -4,6 +4,7 @@
 ## [Contextual Abstractions, Typeclasses and Sequential Computation](docs/typeclasses_monads.md)
 ## [Functional Programming with Cats](docs/cats_typeclasses_validation.md)
 ## [Back to the Future: Concurrency and Parallelism](docs/futures.md)
+## [Functional Design](docs/functional_design.md)
 
 
 
