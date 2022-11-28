@@ -18,3 +18,4 @@ References:
 6. [Core Scala FP Tutorials](https://github.com/Baeldung/scala-tutorials/tree/master/scala-core-fp)
 7. [Typelevel documentation](https://typelevel.org/cats)
 8. [Principles of Functional Programming](https://medium.com/@kumbhar.pradnya/functional-programming-principles-6f59bc6764ff)
+9. [Domain Driven Design in Functional Programming](https://www.thoughtworks.com/insights/blog/architecture/domain-driven-design-in-functional-programming)
