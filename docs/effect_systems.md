@@ -131,6 +131,8 @@ object MyApp extends IOApp.Simple:
 
 ![Cats Effect 3 Typeclass Hierarchy](img/ce3.png)
 
+(credit: [impurepics](https://impurepics.com/))
+
 ---
 
 ### Cats Effect Ecosystem
