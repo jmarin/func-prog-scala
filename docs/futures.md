@@ -238,8 +238,7 @@ for
 yield ()
 ```
 
-The code above prints "Hello World" only once because of these properties. It obviously violates referential transparency guarantees and makes it harder to reason about. In order to force the expected behavior, the "correct" 
-code is as follows:
+The code above prints "Hello World" only once because of these properties. It obviously violates referential transparency guarantees and makes it harder to reason about. In order to force the expected behavior, the "correct" code is as follows:
 
 ```scala
 for 

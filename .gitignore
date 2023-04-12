@@ -4,3 +4,6 @@
 .bsp/
 .scala-build/
 .vscode/
+.bloop/
+target/
+metals.sbt

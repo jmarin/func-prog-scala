@@ -5,6 +5,7 @@
 ## [Functional Programming with Cats](docs/cats_typeclasses_validation.md)
 ## [Back to the Future: Concurrency and Parallelism](docs/futures.md)
 ## [Functional Design](docs/functional_design.md)
+## [Effect Systems](docs/effect_systems.md)
 
 
 
@@ -19,3 +20,6 @@ References:
 7. [Typelevel documentation](https://typelevel.org/cats)
 8. [Principles of Functional Programming](https://medium.com/@kumbhar.pradnya/functional-programming-principles-6f59bc6764ff)
 9. [Domain Driven Design in Functional Programming](https://www.thoughtworks.com/insights/blog/architecture/domain-driven-design-in-functional-programming)
+10. [Cats Effect Documentation](https://typelevel.org/cats-effect/)
+11. [Daniel Spiewak Thread Pools](https://gist.github.com/djspiewak/46b543800958cf61af6efa8e072bfd5c)
+12. [Impure Pics](https://impurepics.com/)
