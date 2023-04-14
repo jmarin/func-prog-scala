@@ -1,12 +1,12 @@
 ## Effect Systems
 
   * [Introduction](#introduction)
-  * [The IO Monad](#the-io-monad)
   * [Cats Effect](#cats-effect)
   * [Cats Effect Ecosystem](#cats-effect-ecosystem)
-  * [Cats Effect Thread Pools](#cats-effect-thread-pools)
+  * [Cats Effect Thread Model](#cats-effect-thread-model)
+  * [The IO Monad](#the-io-monad)
+  * [Concurrency vs Parallelism](#concurrency-vs-parallelism)
   * [Concurrency in Cats Effect](#concurrency-in-cats-effect)
-
 
 ---
 
@@ -57,6 +57,70 @@ The problem with `Future` is that it is an effect system that cannot wrap side e
 What we desire in these cases is a purely functional I/O abstraction, where we can defer the execution "until the end of the world" (usually the main program), and describe all the pieces of my software with referentially transparent values (functions). This will allow us to build more complex interactions by just composing the different pieces; with a powerful type system like the one in `Scala` it is possible to build very robust, complex and yet correct abstractions following this model.
 
 ---
+
+### Cats Effect
+
+`Cats Effect` is a big library that introduces many new concepts and typeclasses for working with an Effect System. It provides an asynchronous runtime that other libraries or custom application code build on top of. It can be thought of an alternative to `Akka`, though there are many differences in its approach and design. At the end of the the day `Cats Effect` is a library that provides tools for asynchronous concurrent and parallel code on the `JVM` and `JS` runtimes.
+
+![Cats Effect 3 Typeclass Hierarchy](img/ce3.png)
+
+(credit: [impurepics](https://impurepics.com/))
+
+---
+
+### Cats Effect Ecosystem
+
+The ecosystem built on top of `Cats Effect` is impressive. Many of the libraries that are built on top of it have been battle tested in production at scale. Some of the more important ones are: 
+
+
+* [FS2](https://fs2.io/#/) --> Functional, effectful, concurrent streams for `Scala`. The `FS2` ecosystem includes extensions such as [`FS2-GRPC`](https://github.com/typelevel/fs2-grpc) and [`FS2 Kafka`](https://fd4s.github.io/fs2-kafka/)
+* [Http4s](https://http4s.org/) --> Typeful, functional, streaming HTTP for `Scala`
+* [Doobie](https://tpolecat.github.io/doobie/) --> Pure functional layer for `Scala` and `Cats`
+* [Log4Cats](https://github.com/typelevel/log4cats) --> Referentially transparent logging
+* [otel4s](https://typelevel.org/otel4s/) --> [OpenTelemetry](https://opentelemetry.io/) implementation for `Scala`
+* [Scala Steward](https://github.com/scala-steward-org/scala-steward) --> A bot that helps keep your library dependencies, sbt plugins, and `Scala` and sbt versions up-to-date
+
+---
+
+### Cats Effect Thread Model
+
+The `Cats Effect` Thread Model is the substrate upon which all the library's capabilities are built. It is important to take into account its design parameters and how to use it in practice. There are two main concepts to take into consideration: Thread Pools and Fibers
+
+#### Cats Effect Thread Pools
+
+For long running services on the `JVM`, Thread pools should be created in the following three categories: 
+
+* CPU bound. This is roughly the number of available processors for compute-based operations
+* Blocking IO. Unbounded, cached thread pool for blocking operations
+* Non-blocing IO. 1 or 2 high-priority threads for handling asynchronous IO events, which get immediately shifted to the compute pool
+
+Important note: the `scala.concurrent.ExcecutionContext.global` thread pool is a very poor choice for your application outside of maybe testing. It is a fork-join pool that creates too many threads and is not optimized in the way described above. 
+
+Running blocking code in the compute thread pool is **VERY BAD**. In Cats Effect 3 the thread pool management has been simplified by using a work stealing thread pool implementation, as well as introducing the `blocking` keyword that signals an operation to be run in the blocking thread pool. 
+
+
+---
+
+#### Fibers
+
+In the context of `Cats Effect`, a fiber refers to a lightweight, concurrent computation that can be used to model and manage concurrent tasks. Fibers are similar to threads, but they are not tied to any particular operating system thread, making them more efficient and scalable for concurrent programming in `Scala`. Fibers provide a more fine-grained concurrency model than Java threads and are very lightweight, which means that programs can run many more concurrent fibers than OS threads available. As usual with concurrent programs though, carefully managing resources is important. The Cats Effect library provides very powerful utilities in this area.
+
+Here are some examples of how fibers can be used in Cats Effect:
+
+1. `Sleep`: A fiber can be used to represent a timed delay or sleep operation. For example, you can create a fiber that sleeps for a specified amount of time and then performs some action, such as printing a message or updating a value. This can be useful for implementing timeouts, delays, and other time-related operations in concurrent code.
+
+```scala
+import cats.effect.{IO, Fiber}
+import scala.concurrent.duration._
+
+// Sleep for 5 seconds and then print a message
+val fiber: Fiber[IO, Unit] = IO.sleep(5.seconds).flatMap(_ => IO(println("Hello, world!"))).start.unsafeRunSync()
+
+// Cancel the sleep operation before it completes
+fiber.cancel.unsafeRunSync()
+```
+
+
 
 ### The IO Monad
 
@@ -125,33 +189,32 @@ object MyApp extends IOApp.Simple:
 
 ---
 
-### Cats Effect
+#### Chaining IO
 
-`Cats Effect` is a big library that introduces many new concepts and typeclasses for working with an Effect System. It provides an asynchronous runtime that other libraries or custom application code build on top of. It can be thought of an alternative to `Akka`, though there are many differences in its approach and design. At the end of the the day `Cats Effect` is a library that provides tools for asynchronous concurrent and parallel code on the `JVM` and `JS` runtimes.
+Besides a for-comprehension expression (syntactic sugar for `map`, `flatMap`, `filter`), IO monads also have other operators that allow you to chain them one after another. This is useful when you don't necessarily care about some intermediate steps. The main operators are:
 
-![Cats Effect 3 Typeclass Hierarchy](img/ce3.png)
+* `*>` --> Executes two `IO` one after the other, keeping the right side value and discarding the left side value
+* `>>` --> Same as above, but execution is lazily evaluated. Useful for recursion (stack safe)
+* `&>` --> Similar to above, but execution is done in parallel instead of sequentially
 
-(credit: [impurepics](https://impurepics.com/))
+These combinators have the equivalent "left side" variants that invert which result is kept
 
----
+```scala
+val io1: IO[Int] = IO(42)
+val io2: IO[String] = IO("Meaning of life")
 
-### Cats Effect Ecosystem
-
-The ecosystem built on top of `Cats Effect` is impressive. Many of the libraries that are built on top of it have been battle tested in production at scale. Some of the more important ones are: 
-
-
-* [FS2](https://fs2.io/#/) --> Functional, effectful, concurrent streams for `Scala`. The `FS2` ecosystem includes extensions such as [`FS2-GRPC`](https://github.com/typelevel/fs2-grpc) and [`FS2 Kafka`](https://fd4s.github.io/fs2-kafka/)
-* [Http4s](https://http4s.org/) --> Typeful, functional, streaming HTTP for `Scala`
-* [Doobie](https://tpolecat.github.io/doobie/) --> Pure functional layer for `Scala` and `Cats`
-* [Log4Cats](https://github.com/typelevel/log4cats) --> Referentially transparent logging
-* [otel4s](https://typelevel.org/otel4s/) --> [OpenTelemetry](https://opentelemetry.io/) implementation for `Scala`
-* [Scala Steward](https://github.com/scala-steward-org/scala-steward) --> A bot that helps keep your library dependencies, sbt plugins, and `Scala` and sbt versions up-to-date
+val meaningStr: IO[String] = io1 *> io2 // computes both, io1 first io2 second, keeps io2 result
+val meaningStr2: IO[Int] = io1 <* io2 // computes both, io1 first io2 second, keeps io1 result 
+```
 
 ---
 
-### Cats Effect Thread Pools
+
+### Concurrency vs Parallelism
+
 
 ---
+
 
 ### Concurrency in Cats Effect
 
