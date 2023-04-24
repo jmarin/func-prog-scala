@@ -217,7 +217,7 @@ As a review, the following picture summarizes the differences between concurrenc
 
 ![Concurrency vs Parallelism](/docs/img/concurrency-vs-parallelism.png)
 
-Credit: Cats Effect Documentation
+(Credit: Cats Effect Documentation)
 
 
 
