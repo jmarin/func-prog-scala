@@ -119,6 +119,23 @@ val fiber: Fiber[IO, Unit] = IO.sleep(5.seconds).flatMap(_ => IO(println("Hello,
 fiber.cancel.unsafeRunSync()
 ```
 
+2. `Cancellation`: Fibers can be cancelled, allowing you to terminate concurrent tasks early if needed. For example, you can create a fiber that performs a long-running computation and periodically checks for cancellation signals. If a cancellation signal is received, the fiber can terminate gracefully and release any resources it was using.
+
+```scala
+import cats.effect.{IO, Fiber}
+import scala.concurrent.duration.*
+import cats.effect.unsafe.implicits.global
+
+val program: IO[Unit] =
+  for
+    fiber <- IO.println("hello!").foreverM.start
+    _ <- IO.sleep(5.seconds)
+    _ <- fiber.cancel *> IO.println("Fiber Canceled!")
+  yield ()
+
+program.unsafeRunSync()
+```
+
 ### The IO Monad
 
 Originally implemented in languages like `Haskell`, a pure functional language. Any operation that deals with I/O will have a return type of `IO` (in addition to this, there are other restrictions on how it gets used). In `Scala` this is obviously not the case, and we have to use libraries in order to implement similar behavior.  
@@ -227,7 +244,7 @@ As a review, the following picture summarizes the differences between concurrenc
 
 #### Fibers
 
-`Cats Effect` has a powerful scheduler that allows it to schedule and manage interleaving logical units of computation through `fibers`. As we defined earlier, a Fiber is analogous to a native thread, but much more lightweight. They are super cheap to create, which means we can have hundreds of thousands of them. They are also easy to context switch and cancel, and they never block in the traditional sense (there is _semantic blocking_, but no actual OS thread blocking). 
+`Cats Effect` has a powerful scheduler that allows it to schedule and manage interleaving logical units of computation through `fibers`. As we defined earlier, a `Fiber` is analogous to a native thread, but much more lightweight. They are super cheap to create, which means we can have hundreds of thousands of them. They are also easy to context switch and cancel, and they never block in the traditional sense (there is _semantic blocking_, but no actual OS thread blocking). 
 
 A Fiber is a "virtual" thread that encapsulates the execution of an `IO[A]`, represented by the fiber type --> `FiberIO[A]`. It can have three possible outcomes, encoded by the type `OutcomeIO[A]`: 
 
