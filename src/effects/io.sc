@@ -1,5 +1,5 @@
 //> using dep "org.typelevel::cats-core:2.9.0"
-//> using dep "org.typelevel::cats-effect:3.4.8"
+//> using dep "org.typelevel::cats-effect:3.4.9"
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global // Don't do this in production!!!

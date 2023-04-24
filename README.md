@@ -23,3 +23,4 @@ References:
 10. [Cats Effect Documentation](https://typelevel.org/cats-effect/)
 11. [Daniel Spiewak Thread Pools](https://gist.github.com/djspiewak/46b543800958cf61af6efa8e072bfd5c)
 12. [Impure Pics](https://impurepics.com/)
+13. [Concurrency in Cats Effect 3](https://typelevel.org/blog/2020/10/30/concurrency-in-ce3.html)

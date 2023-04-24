@@ -5,7 +5,6 @@
   * [Cats Effect Ecosystem](#cats-effect-ecosystem)
   * [Cats Effect Thread Model](#cats-effect-thread-model)
   * [The IO Monad](#the-io-monad)
-  * [Concurrency vs Parallelism](#concurrency-vs-parallelism)
   * [Concurrency in Cats Effect](#concurrency-in-cats-effect)
 
 ---
@@ -120,8 +119,6 @@ val fiber: Fiber[IO, Unit] = IO.sleep(5.seconds).flatMap(_ => IO(println("Hello,
 fiber.cancel.unsafeRunSync()
 ```
 
-
-
 ### The IO Monad
 
 Originally implemented in languages like `Haskell`, a pure functional language. Any operation that deals with I/O will have a return type of `IO` (in addition to this, there are other restrictions on how it gets used). In `Scala` this is obviously not the case, and we have to use libraries in order to implement similar behavior.  
@@ -210,18 +207,209 @@ val meaningStr2: IO[Int] = io1 <* io2 // computes both, io1 first io2 second, ke
 ---
 
 
-### Concurrency vs Parallelism
-
-
----
-
-
 ### Concurrency in Cats Effect
+
+As we have stated before in this course, concurrency and parallelism are NOT the same thing. These terms get used interchangeably sometimes, knowingly or not. Concurrency and parallelism are hard concepts to grasp if you want to go low level; concurrent code written in some powerful languages like `C++` is error prone and the source of many bugs. Higher level languages like `Java` or `Scala` facilitate things to some degree, but it is still easy to make mistakes. Many libraries have been written to abstract away the complexity, and we are at the edge of a paradigm shift with the introduction of [Virtual Threads](https://openjdk.org/jeps/425) in Project Loom, available now in JDK19. This will change the shape of many `Java` libraries, and possibly some `Scala` ones too. It is early days to say how that will happen, but watch the space!. I still believe the monadic composition offered by a library like `Cats Effect` has many benefits for program clarity and structure. 
+
+As a review, the following picture summarizes the differences between concurrency and parallelism. In a nutshell:
+ * Concurrency --> things are happening at the same time with multiple logical threads of control
+ * Parallelism --> task is divided among CPUs, to increase performance
+
+![Concurrency vs Parallelism](/docs/img/concurrency-vs-parallelism.png)
+
+Credit: Cats Effect Documentation
+
+
+
+**Important Note**: most of the concepts in this section belong to a low-level API. In most cases, you won't need to use this directly since libraries like `Http4s` or `fs2` will already have taken care of the low level details for you. But it is a powerful abstraction and it is good to know how it works. 
 
 ---
 
 #### Fibers
 
+`Cats Effect` has a powerful scheduler that allows it to schedule and manage interleaving logical units of computation through `fibers`. As we defined earlier, a Fiber is analogous to a native thread, but much more lightweight. They are super cheap to create, which means we can have hundreds of thousands of them. They are also easy to context switch and cancel, and they never block in the traditional sense (there is _semantic blocking_, but no actual OS thread blocking). 
+
+A Fiber is a "virtual" thread that encapsulates the execution of an `IO[A]`, represented by the fiber type --> `FiberIO[A]`. It can have three possible outcomes, encoded by the type `OutcomeIO[A]`: 
+
+* `Succeeded`: indicates the success with a value of type `A`
+* `Errored`: indicates failure with type `Throwable`
+* `Canceled`: indicates abnormal termination via cancelation
+
+##### Starting and Joining Fibers
+
+Here is an example of starting and joining fibers:
+
+```scala
+import cats.effect.IO
+import cats.effect.Fiber
+import cats.effect.unsafe.implicits.global
+
+val program: IO[Unit] =
+  for
+    // Start the first fiber
+    fiber1 <- IO {
+      println("Fiber 1 started")
+      Thread.sleep(1000)
+      println("Fiber 1 finished")
+    }.start
+
+    // start the second fiber
+    fiber2 <- IO {
+      println("Fiber 2 started")
+      Thread.sleep(2000)
+      println("Fiber 2 finished")
+    }.start
+
+    // Join the fibers
+    _ <- fiber1.join
+    _ <- fiber2.join
+
+    // Print a message when both fibers are finished
+    _ <- IO(println("Both fibers are finished!"))
+  yield ()
+
+program.unsafeRunSync()
+```
+
+##### Canceling fibers
+
+A fiber can be canceled after its execution begins with the FiberIO#cancel function. This semantically blocks the current fiber until the target fiber has finalized and terminated, and then returns
+
+In this program, the main fiber spawns a second fiber that continuously prints hello!. After 5 seconds, the main fiber cancels the second fiber and then the program exits.
+
+```scala
+import cats.effect.{IO, Fiber}
+import scala.concurrent.duration.*
+import cats.effect.unsafe.implicits.global
+
+val program: IO[Unit] =
+  for
+    fiber <- IO.println("hello!").foreverM.start
+    _ <- IO.sleep(5.seconds)
+    _ <- fiber.cancel
+  yield ()
+
+program.unsafeRunSync()
+```
 
 
+##### Racing Fibers
 
+We can also race fibers against each other. There are several methods to do this: 
+
+* `racePair`: races two fibers and returns the outcome of the winner as well as a handle to the FiberIO of the loser. 
+* `race`: races two fibers and returns the successful outcome of the winner after canceling the loser
+* `both`: races two fibers and returns the successful outcome of both (runs them concurrently and waits for both to complete)
+
+Here is an example for racing two fibers:
+
+```scala
+object RaceFibers extends IOApp.Simple:
+
+  def factorial(n: Long): Long =
+    if (n == 0) 1 else n * factorial(n - 1)
+
+  override def run: IO[Unit] =
+    for
+      res <- IO.race(IO(factorial(20)), IO(factorial(20)))
+      _ <- res.fold(
+        a => IO.println(s"Left hand side won: $a"),
+        b => IO.println(s"Right hand side won: $b")
+      )
+    yield ()
+```
+
+##### Shared mutable state with Fibers
+
+**Important note**: shared mutable state is the source of most concurrency bugs in software. DON'T DO IT!!!
+
+Having said that, sometimes it is necessary to do this in order to model the problem we are trying to solve. There are two types in the `Cats Effect` library that help with this: `Ref` and `Deferred`
+
+* `Ref`: a concurrent mutable reference, provices safe concurrent access and modification of its content, but no functionality for synchronization (this is done by `Deferred`). It is basically a functional wrapper around an `AtomicReference`. A `Ref` is used to hold state that can safely be accessed and modified by many `fibers`. This is its basic API
+
+```scala
+trait Ref[F[_], A]:
+  def get: F[A]
+  def set(a: A): F[Unit]
+  def updateAndGet(f: A => A): F[A]
+  def modify(f: A => (A, B)): F[B]
+```
+
+Example: concurrent counter --> the workers will concurrently run and update the value of the `Ref`
+
+```scala
+import cats.effect.{IO, IOApp, Sync}
+import cats.effect.kernel.Ref
+import cats.syntax.all._
+import cats.effect.unsafe.implicits.global
+
+class Worker[F[_]](id: Int, ref: Ref[F, Int])(implicit F: Sync[F]):
+
+  private def putStrLn(value: String): F[Unit] =
+    F.blocking(println(value))
+
+  def start: F[Unit] =
+    for {
+      c1 <- ref.get
+      _ <- putStrLn(show"Worker #$id >> $c1")
+      c2 <- ref.updateAndGet(x => x + 1)
+      _ <- putStrLn(show"Worker #$id >> $c2")
+    } yield ()
+
+val program: IO[Unit] =
+  for
+    ref <- Ref[IO].of(0)
+    w1 = new Worker[IO](1, ref)
+    w2 = new Worker[IO](2, ref)
+    w3 = new Worker[IO](3, ref)
+    _ <- List(
+      w1.start,
+      w2.start,
+      w3.start
+    ).parSequence.void
+  yield ()
+
+program.unsafeRunSync()
+```
+
+* `Deferred`: A purely functional synchronization primitive which represents a single value which may not yet be available (a functional "promise"). As opposed to `Ref`, when created a `Deferred` can be empty. It can be completed only once. 
+
+```scala
+abstract class Deferred[F[_], A]:
+  def get: F[A]
+  def complete(a: A): F[Boolean]
+```
+
+The get method blocks all fibers until the `Deferred` has been completed with a value. The complete method completes the `Deferred`, unblocking all waiting `fibers`. When we say "blocking" here we are talking about _semantic blocking_; not actual threads are blocked. 
+
+Example: countdown
+
+```scala
+import cats.effect.IO
+import cats.effect.kernel.Deferred
+import cats.syntax.all.*
+import scala.concurrent.duration.*
+import cats.effect.unsafe.implicits.global
+
+def countdown(n: Int, pause: Int, waiter: Deferred[IO, Unit]): IO[Unit] =
+  IO.print(s"$n ") *> IO.defer {
+    if (n == 0) then IO.unit
+    else if (n == pause) then
+      IO.println("paused....") *> waiter.get *> countdown(n - 1, pause, waiter)
+    else countdown(n - 1, pause, waiter)
+  }
+
+val program: IO[Unit] =
+  for
+    waiter <- IO.deferred[Unit]
+    f <- countdown(10, 5, waiter).start
+    _ <- IO.sleep(5.seconds)
+    _ <- waiter.complete(())
+    _ <- f.join
+    _ <- IO.println("blast off!")
+  yield ()
+
+program.unsafeRunSync()
+```
+
+In this program, the main fiber spawns a fiber that initiates a countdown. When the countdown reaches 5, it waits on a Deferred which is completed 5 seconds later by the main fiber. The main fiber then waits for the countdown to complete before exiting. 
