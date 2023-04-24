@@ -83,7 +83,7 @@ The ecosystem built on top of `Cats Effect` is impressive. Many of the libraries
 
 ### Cats Effect Thread Model
 
-The `Cats Effect` Thread Model is the substrate upon which all the library's capabilities are built. It is important to take into account its design parameters and how to use it in practice. There are two main concepts to take into consideration: Thread Pools and Fibers
+The `Cats Effect` Thread Model is the substrate upon which all the library's capabilities are built. It is important to take into account its design parameters and how to use it in practice. There are two main concepts to take into consideration: Thread Pools and `Fibers`
 
 #### Cats Effect Thread Pools
 
@@ -102,11 +102,11 @@ Running blocking code in the compute thread pool is **VERY BAD**. In Cats Effect
 
 #### Fibers
 
-In the context of `Cats Effect`, a fiber refers to a lightweight, concurrent computation that can be used to model and manage concurrent tasks. Fibers are similar to threads, but they are not tied to any particular operating system thread, making them more efficient and scalable for concurrent programming in `Scala`. Fibers provide a more fine-grained concurrency model than Java threads and are very lightweight, which means that programs can run many more concurrent fibers than OS threads available. As usual with concurrent programs though, carefully managing resources is important. The Cats Effect library provides very powerful utilities in this area.
+In the context of `Cats Effect`, a `fiber` refers to a lightweight, concurrent computation that can be used to model and manage concurrent tasks. `Fibers` are similar to threads, but they are not tied to any particular operating system thread, making them more efficient and scalable for concurrent programming in `Scala`. `Fibers` provide a more fine-grained concurrency model than Java threads and are very lightweight, which means that programs can run many more concurrent `fibers` than OS threads available. As usual with concurrent programs though, carefully managing resources is important. The Cats Effect library provides very powerful utilities in this area.
 
-Here are some examples of how fibers can be used in Cats Effect:
+Here are some examples of how `fibers` can be used in Cats Effect:
 
-1. `Sleep`: A fiber can be used to represent a timed delay or sleep operation. For example, you can create a fiber that sleeps for a specified amount of time and then performs some action, such as printing a message or updating a value. This can be useful for implementing timeouts, delays, and other time-related operations in concurrent code.
+1. `Sleep`: A `fiber` can be used to represent a timed delay or sleep operation. For example, you can create a `fiber` that sleeps for a specified amount of time and then performs some action, such as printing a message or updating a value. This can be useful for implementing timeouts, delays, and other time-related operations in concurrent code.
 
 ```scala
 import cats.effect.{IO, Fiber}
@@ -119,7 +119,7 @@ val fiber: Fiber[IO, Unit] = IO.sleep(5.seconds).flatMap(_ => IO(println("Hello,
 fiber.cancel.unsafeRunSync()
 ```
 
-2. `Cancellation`: Fibers can be cancelled, allowing you to terminate concurrent tasks early if needed. For example, you can create a fiber that performs a long-running computation and periodically checks for cancellation signals. If a cancellation signal is received, the fiber can terminate gracefully and release any resources it was using.
+2. `Cancellation`: Fibers can be cancelled, allowing you to terminate concurrent tasks early if needed. For example, you can create a `fiber` that performs a long-running computation and periodically checks for cancellation signals. If a cancellation signal is received, the `fiber` can terminate gracefully and release any resources it was using.
 
 ```scala
 import cats.effect.{IO, Fiber}
@@ -246,7 +246,7 @@ As a review, the following picture summarizes the differences between concurrenc
 
 `Cats Effect` has a powerful scheduler that allows it to schedule and manage interleaving logical units of computation through `fibers`. As we defined earlier, a `Fiber` is analogous to a native thread, but much more lightweight. They are super cheap to create, which means we can have hundreds of thousands of them. They are also easy to context switch and cancel, and they never block in the traditional sense (there is _semantic blocking_, but no actual OS thread blocking). 
 
-A Fiber is a "virtual" thread that encapsulates the execution of an `IO[A]`, represented by the fiber type --> `FiberIO[A]`. It can have three possible outcomes, encoded by the type `OutcomeIO[A]`: 
+A `Fiber` is a "virtual" thread that encapsulates the execution of an `IO[A]`, represented by the `fiber` type --> `FiberIO[A]`. It can have three possible outcomes, encoded by the type `OutcomeIO[A]`: 
 
 * `Succeeded`: indicates the success with a value of type `A`
 * `Errored`: indicates failure with type `Throwable`
@@ -290,9 +290,9 @@ program.unsafeRunSync()
 
 ##### Canceling fibers
 
-A fiber can be canceled after its execution begins with the FiberIO#cancel function. This semantically blocks the current fiber until the target fiber has finalized and terminated, and then returns
+A `fiber` can be canceled after its execution begins with the FiberIO#cancel function. This semantically blocks the current fiber until the target fiber has finalized and terminated, and then returns
 
-In this program, the main fiber spawns a second fiber that continuously prints hello!. After 5 seconds, the main fiber cancels the second fiber and then the program exits.
+In this program, the main `fiber` spawns a second `fiber` that continuously prints hello!. After 5 seconds, the main `fiber` cancels the second `fiber` and then the program exits.
 
 ```scala
 import cats.effect.{IO, Fiber}
@@ -312,7 +312,7 @@ program.unsafeRunSync()
 
 ##### Racing Fibers
 
-We can also race fibers against each other. There are several methods to do this: 
+We can also race `fibers` against each other. There are several methods to do this: 
 
 * `racePair`: races two fibers and returns the outcome of the winner as well as a handle to the FiberIO of the loser. 
 * `race`: races two fibers and returns the successful outcome of the winner after canceling the loser
