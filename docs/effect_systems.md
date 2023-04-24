@@ -89,9 +89,9 @@ The `Cats Effect` Thread Model is the substrate upon which all the library's cap
 
 For long running services on the `JVM`, Thread pools should be created in the following three categories: 
 
-* CPU bound. This is roughly the number of available processors for compute-based operations
-* Blocking IO. Unbounded, cached thread pool for blocking operations
-* Non-blocing IO. 1 or 2 high-priority threads for handling asynchronous IO events, which get immediately shifted to the compute pool
+* `CPU bound`. This is roughly the number of available processors for compute-based operations
+* `Blocking IO`. Unbounded, cached thread pool for blocking operations
+* `Non-blocing IO`. 1 or 2 high-priority threads for handling asynchronous IO events, which get immediately shifted to the compute pool
 
 Important note: the `scala.concurrent.ExcecutionContext.global` thread pool is a very poor choice for your application outside of maybe testing. It is a fork-join pool that creates too many threads and is not optimized in the way described above. 
 
